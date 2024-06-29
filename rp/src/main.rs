@@ -3,6 +3,7 @@ use std::process::exit;
 use cli::{Cli, Command};
 use exchange::exchange;
 use key::{genkey, pubkey};
+use rosenpass_secret_memory::policy;
 
 mod cli;
 mod exchange;
@@ -10,6 +11,11 @@ mod key;
 
 #[tokio::main]
 async fn main() {
+    #[cfg(feature = "enable_memfd_alloc")]
+    policy::secret_policy_try_use_memfd_secrets();
+    #[cfg(not(feature = "enable_memfd_alloc"))]
+    policy::secret_policy_use_only_malloc_secrets();
+
     let cli = match Cli::parse(std::env::args().peekable()) {
         Ok(cli) => cli,
         Err(err) => {

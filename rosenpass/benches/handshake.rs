@@ -1,10 +1,12 @@
 use anyhow::Result;
 use rosenpass::protocol::{CryptoServer, HandleMsgResult, MsgBuf, PeerPtr, SPk, SSk, SymKey};
+use std::ops::DerefMut;
 
 use rosenpass_cipher_traits::Kem;
 use rosenpass_ciphers::kem::StaticKem;
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use rosenpass_secret_memory::secret_policy_try_use_memfd_secrets;
 
 fn handle(
     tx: &mut CryptoServer,
@@ -39,7 +41,7 @@ fn hs(ini: &mut CryptoServer, res: &mut CryptoServer) -> Result<()> {
 
 fn keygen() -> Result<(SSk, SPk)> {
     let (mut sk, mut pk) = (SSk::zero(), SPk::zero());
-    StaticKem::keygen(sk.secret_mut(), pk.secret_mut())?;
+    StaticKem::keygen(sk.secret_mut(), pk.deref_mut())?;
     Ok((sk, pk))
 }
 
@@ -56,6 +58,7 @@ fn make_server_pair() -> Result<(CryptoServer, CryptoServer)> {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
+    secret_policy_try_use_memfd_secrets();
     let (mut a, mut b) = make_server_pair().unwrap();
     c.bench_function("cca_secret_alloc", |bench| {
         bench.iter(|| {

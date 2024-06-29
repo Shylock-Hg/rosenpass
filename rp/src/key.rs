@@ -1,11 +1,12 @@
 use std::{
     fs::{self, DirBuilder},
+    ops::DerefMut,
     os::unix::fs::{DirBuilderExt, PermissionsExt},
     path::Path,
 };
 
 use anyhow::{anyhow, Result};
-use rosenpass_util::file::{LoadValueB64, StoreValueB64};
+use rosenpass_util::file::{LoadValueB64, StoreValue, StoreValueB64};
 use zeroize::Zeroize;
 
 use rosenpass::protocol::{SPk, SSk};
@@ -56,8 +57,8 @@ pub fn genkey(private_keys_dir: &Path) -> Result<()> {
     if !pqsk_path.exists() && !pqpk_path.exists() {
         let mut pqsk = SSk::random();
         let mut pqpk = SPk::random();
-        StaticKem::keygen(pqsk.secret_mut(), pqpk.secret_mut())?;
-        pqpk.store_secret(pqpk_path)?;
+        StaticKem::keygen(pqsk.secret_mut(), pqpk.deref_mut())?;
+        pqpk.store(pqpk_path)?;
         pqsk.store_secret(pqsk_path)?;
     } else {
         eprintln!(
@@ -102,6 +103,7 @@ mod tests {
     use std::fs;
 
     use rosenpass::protocol::{SPk, SSk};
+    use rosenpass_secret_memory::secret_policy_try_use_memfd_secrets;
     use rosenpass_secret_memory::Secret;
     use rosenpass_util::file::LoadValue;
     use rosenpass_util::file::LoadValueB64;
@@ -110,7 +112,8 @@ mod tests {
     use crate::key::{genkey, pubkey, WG_B64_LEN};
 
     #[test]
-    fn it_works() {
+    fn test_key_loopback() {
+        secret_policy_try_use_memfd_secrets();
         let private_keys_dir = tempdir().unwrap();
         fs::remove_dir(private_keys_dir.path()).unwrap();
 

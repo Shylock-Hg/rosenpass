@@ -19,7 +19,7 @@ wireguard-uapi = { workspace = true }
 
 # Socket handler only
 rosenpass-to = { workspace = true }
-tokio = { version = "1.34.0", features = ["sync", "full", "mio"] }
+tokio = { version = "1.38.0", features = ["sync", "full", "mio"] }
 anyhow = { workspace = true }
 clap = { workspace = true }
 env_logger = { workspace = true }
@@ -33,6 +33,7 @@ rosenpass-util = { workspace = true }
 
 [dev-dependencies]
 rand = {workspace = true}
+procspawn = {workspace = true}
 
 [features]
 enable_broker_api=[]
@@ -43,6 +44,7 @@ path = "src/bin/priviledged.rs"
 test = false
 doc = false
 required-features=["enable_broker_api"]
+cfg = { target_os = "linux" } 
 
 [[bin]]
 name = "rosenpass-wireguard-broker-socket-handler"
@@ -50,3 +52,4 @@ test = false
 path = "src/bin/socket_handler.rs"
 doc = false
 required-features=["enable_broker_api"]
+cfg = { target_os = "linux" } 
